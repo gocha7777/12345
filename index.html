@@ -1,98 +1,625 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Telegram Calc</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            background: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
-            font-family: Arial;
-            margin: 0;
-            padding: 10px;
-        }
-
-        #display {
-            width: 100%;
-            height: 60px;
-            font-size: 24px;
-            text-align: right;
-            margin-bottom: 10px;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-
-        .buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 5px;
-        }
-
-        button {
-            padding: 20px;
-            font-size: 20px;
-            border: none;
-            background: var(--tg-theme-secondary-bg-color);
-            color: var(--tg-theme-text-color);
-            cursor: pointer;
-        }
-
-        button:active {
-            opacity: 0.7;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра с ловушками и звездами</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #0b0f17;
+        font-family: Arial, sans-serif;
+        overflow-x: hidden;
+        font-size: 1rem;
+        /* Основной размер шрифта */
+    }
+
+    *,
+    :after,
+    :before,
+    html {
+        box-sizing: border-box;
+    }
+
+    .game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        /* Заменено на относительный размер */
+        width: 100%;
+        max-width: 60rem;
+        /* Заменено на rem для гибкости */
+        padding: 2rem;
+        /* Заменено на rem */
+    }
+
+    .select-traps {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        /* Заменено на rem */
+        background-color: #0a0f1e;
+        border-radius: 0.5rem;
+        height: 3rem;
+        /* Заменено на rem */
+        max-width: 30rem;
+        /* Заменено на rem */
+        width: 100%;
+        padding: 1rem 1.25rem;
+        /* Заменено на rem */
+    }
+
+    .select-traps__prev-arrow-btn,
+    .select-traps__next-arrow-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        /* Заменено на rem */
+    }
+
+    .select-traps__arrow-icon {
+        fill: #97a3cb;
+        height: 1.25rem;
+        width: 0.75rem;
+    }
+
+    .select-traps__content {
+        align-content: center;
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        width: 6rem;
+        /* Заменено на rem */
+    }
+
+    .select-traps__traps_amount {
+        color: #f3f3f3;
+        font-family: Halvar Breit Md, sans-serif;
+        font-size: 1rem;
+        /* Заменено на rem */
+        font-weight: 500;
+        line-height: 1.125rem;
+        /* Заменено на rem */
+    }
+
+    .select-traps__title {
+        color: #97a3cb;
+        font-family: FS Elliot Pro, serif;
+        font-size: 0.75rem;
+        /* Заменено на rem */
+        font-weight: 400;
+        line-height: 0.9375rem;
+        /* Заменено на rem */
+    }
+
+    .game-board {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+        gap: 0.5rem;
+        /* Заменено на rem */
+        background: #121726;
+        border: 0.3125rem solid #2e4057;
+        /* Заменено на rem */
+        padding: 0.625rem;
+        /* Заменено на rem */
+        border-radius: 0.625rem;
+        /* Заменено на rem */
+        margin-top: 2rem;
+        margin-right: 1rem;
+        margin-left: 1rem;
+    }
+
+    .cell {
+        width: 4rem;
+        /* Заменено на rem */
+        height: 4rem;
+        /* Заменено на rem */
+        background: linear-gradient(145deg, #2b89b5, #1f6e8d);
+        border-radius: 0.75rem;
+        /* Заменено на rem */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 2rem;
+        /* Заменено на rem */
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .cell.show-icon {
+        background: #151b2e;
+    }
+
+    .cell .icon {
+        font-size: 0;
+        opacity: 0;
+        transition: font-size 0.5s ease-out, opacity 0.5s ease-out;
+    }
+
+    .cell.show-icon .icon {
+        font-size: 2.875rem;
+        /* Заменено на rem */
+        opacity: 1;
+    }
+
+    .mine .icon {
+        color: #515151;
+        text-shadow: 0 0 0.3125rem #fff, 0 0 0.3125rem #515151;
+        /* Заменено на rem */
+    }
+
+    .star .icon {
+        color: #f39c12;
+        text-shadow: 0 0 0.3125rem #fff, 0 0 0.3125rem #515151;
+        /* Заменено на rem */
+    }
+
+    #show-signal-btn {
+        background: linear-gradient(93.73deg, #108de7, #0855c4);
+        color: #fff;
+        border: none;
+        padding: 0.625rem 1.25rem;
+        /* Заменено на rem */
+        font-size: 1rem;
+        /* Заменено на rem */
+        cursor: pointer;
+        border-radius: 0.3125rem;
+        /* Заменено на rem */
+    }
+
+    .menu {
+        margin: 1.25rem 0;
+        /* Заменено на rem */
+        text-align: center;
+    }
+
+    button {
+        background: linear-gradient(93.73deg, #108de7, #0855c4);
+        color: white;
+        border: none;
+        padding: 0.625rem 1.25rem;
+        /* Заменено на rem */
+        font-size: 1rem;
+        /* Заменено на rem */
+        cursor: pointer;
+        border-radius: 0.3125rem;
+        /* Заменено на rem */
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #2980b9;
+    }
+
+    .box {
+        display: flex;
+        gap: 1rem;
+        /* Заменено на rem */
+        align-items: center;
+    }
+
+    /* Общее оформление для панели информации */
+    .info-panel {
+        display: flex;
+        justify-content: space-between;
+        margin: 1.25rem;
+        /* Заменено на rem */
+        gap: 1.25rem;
+        /* Заменено на rem */
+        font-family: 'Arial', sans-serif;
+        background: #151b2e;
+        padding: 1rem;
+        border-radius: 0.625rem;
+        /* Заменено на rem */
+        box-shadow: 0 0.25rem 0.625rem rgba(0, 0, 0, 0.1);
+    }
+
+    .bet-section,
+    .win-section {
+        display: flex;
+        align-items: center;
+    }
+
+    .bet-label,
+    .win-label {
+        font-size: 1.125rem;
+        /* Заменено на rem */
+        font-weight: bold;
+        margin-right: 0.625rem;
+        /* Заменено на rem */
+        color: #f3f3f3;
+        font-family: Halvar Breit Md, sans-serif;
+    }
+
+    .icon {
+        font-size: 1.125rem;
+        /* Заменено на rem */
+    }
+
+    .star-icon {
+        font-size: 1.5rem;
+        /* Заменено на rem */
+        color: gold;
+        margin-left: 0.625rem;
+        /* Заменено на rem */
+        transition: all 0.3s ease;
+    }
+
+    .bet-value.changed,
+    .win-value.changed {
+        color: #ff9900;
+        transform: scale(1.2);
+    }
+
+    .bet-value::before,
+    .win-value::before {
+        content: "$";
+        font-family: FS Elliot Pro, serif;
+        font-size: 0.875rem;
+        /* Заменено на rem */
+        line-height: 1rem;
+        color: #f3f3f3;
+    }
+
+    .bet-value,
+    .win-value {
+        font-family: FS Elliot Pro, serif;
+        font-size: 0.875rem;
+        /* Заменено на rem */
+        line-height: 1rem;
+        color: #39ff70;
+        transition: all 0.3s ease;
+    }
+
+    .claim-prize-link {
+        display: inline-block;
+        padding: 1rem 2rem;
+        /* Заменено на rem */
+        font-size: 1.25rem;
+        /* Заменено на rem */
+        font-weight: bold;
+        color: white;
+        text-decoration: none;
+        background: linear-gradient(90deg, #ff7f50, #ff4500);
+        border-radius: 1.25rem;
+        /* Заменено на rem */
+        box-shadow: 0 0.25rem 0.625rem rgba(255, 69, 0, 0.5), 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .claim-prize-link::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: skewX(-45deg);
+        transition: left 0.5s ease;
+        z-index: 1;
+    }
+
+    .claim-prize-link:hover {
+        background: linear-gradient(90deg, #ff6347, #ff0000);
+        box-shadow: 0 0.375rem 0.875rem rgba(255, 69, 0, 0.6), 0 0.25rem 0.375rem rgba(0, 0, 0, 0.3);
+        transform: scale(1.05);
+    }
+
+    .claim-prize-link:hover::before {
+        left: 100%;
+    }
+
+    .claim-prize-link:active {
+        background: linear-gradient(90deg, #ff4500, #ff0000);
+        box-shadow: inset 0 0.25rem 0.625rem rgba(0, 0, 0, 0.3);
+        transform: scale(0.95);
+    }
+
+    @media (max-width: 320px) {
+
+        .game-container,
+        .select-traps,
+        .game-board,
+        .cell,
+        .info-panel {
+            width: 100%;
+        }
+
+        #show-signal-btn,
+        button {
+            padding: 0.5rem 1rem;
+            /* Заменено на rem */
+            font-size: 0.875rem;
+            /* Заменено на rem */
+        }
+
+        .claim-prize-link {
+            font-size: 1rem;
+            /* Заменено на rem */
+            padding: 0.75rem 1.25rem;
+            /* Заменено на rem */
+        }
+    }
+
+    @media (max-width: 360px) {
+
+        .game-container,
+        .select-traps,
+        .game-board,
+        .cell,
+        .info-panel {
+            width: 100%;
+        }
+
+        #show-signal-btn,
+        button {
+            padding: 0.625rem 1.125rem;
+            /* Заменено на rem */
+            font-size: 1rem;
+            /* Заменено на rem */
+        }
+
+        .claim-prize-link {
+            font-size: 1.125rem;
+            /* Заменено на rem */
+            padding: 0.875rem 1.5rem;
+            /* Заменено на rem */
+        }
+    }
+</style>
 
 <body>
-    <input type="text" id="display" readonly>
-    <div class="buttons">
-        <button onclick="clearDisplay()">C</button>
-        <button onclick="appendChar('(')">(</button>
-        <button onclick="appendChar(')')">)</button>
-        <button onclick="appendChar('/')">/</button>
-        <button onclick="appendChar('7')">7</button>
-        <button onclick="appendChar('8')">8</button>
-        <button onclick="appendChar('9')">9</button>
-        <button onclick="appendChar('*')">×</button>
-        <button onclick="appendChar('4')">4</button>
-        <button onclick="appendChar('5')">5</button>
-        <button onclick="appendChar('6')">6</button>
-        <button onclick="appendChar('-')">-</button>
-        <button onclick="appendChar('1')">1</button>
-        <button onclick="appendChar('2')">2</button>
-        <button onclick="appendChar('3')">3</button>
-        <button onclick="appendChar('+')">+</button>
-        <button onclick="appendChar('0')">0</button>
-        <button onclick="appendChar('.')">.</button>
-        <button onclick="calculate()" style="grid-column: span 2">=</button>
+    <div class="game-container">
+        <!-- Меню выбора количества ловушек -->
+
+        <!-- Поле для игры -->
+        <div id="game-board" class="game-board"></div>
+
+        <div class="box">
+            <button id="show-signal-btn">Показать сигнал</button>
+            <div class="menu">
+                <button id="clearFieldBtn">Очистить поле</button>
+            </div>
+        </div>
+        <div class="select-traps status-bar__select-traps">
+            <!-- Кнопка для уменьшения количества ловушек (левая стрелка) -->
+            <button class="select-traps__prev-arrow-btn" type="button" id="prev_preset_btn">
+                <svg class="select-traps__arrow-icon select-traps__arrow-icon_prev" viewBox="0 0 13 20" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M10.7906 0L2.92616 7.91821L0.858398 10.0001L2.92616 12.082L10.7906 20.0002L12.8584 17.9183L4.99489 10.0001L12.8584 2.0819L10.7906 0Z">
+                    </path>
+                </svg>
+            </button>
+
+            <div class="select-traps__content">
+                <span class="select-traps__traps_amount" id="trapsAmount">1</span>
+                <span class="select-traps__title">ловушек</span>
+            </div>
+
+            <!-- Кнопка для увеличения количества ловушек (правая стрелка) -->
+            <button class="select-traps__next-arrow-btn" type="button" id="next_preset_btn">
+                <svg class="select-traps__arrow-icon" viewBox="0 0 13 20" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M2.92616 0L10.7906 7.91821L12.8584 10.0001L10.7906 12.082L2.92616 20.0002L0.858398 17.9183L8.72287 10.0001L0.858398 2.0819L2.92616 0Z">
+                    </path>
+                </svg>
+            </button>
+        </div>
+        <div class="info-panel">
+            <div class="bet-section">
+                <span class="bet-label">Ставка:</span>
+                <span id="betValue" class="bet-value">$10.00</span> <span class="icon">💰</span>
+            </div>
+            <div class="win-section">
+                <span class="win-label">Выигрыш:</span>
+                <span id="winValue" class="win-value">10.00</span> <span class="star-icon">★</span>
+            </div>
+
+
+        </div>
+        <a href="#" class="claim-prize-link">Забрать выигрыш</a>
+
     </div>
 
     <script>
-        const tg = Telegram.WebApp;
-        let display = document.getElementById("display");
+        const board = document.getElementById("game-board");
+        const showSignalBtn = document.getElementById("show-signal-btn");
+        const trapsAmountElement = document.getElementById("trapsAmount");
+        const prevPresetBtn = document.getElementById("prev_preset_btn");
+        const nextPresetBtn = document.getElementById("next_preset_btn");
 
-        // Инициализация
-        tg.ready();
-        tg.MainButton.setText("Закрыть").show().onClick(() => tg.close());
+        let trapsAmount = 1; // Initial number of traps
+        let betValue = 10;
+        let winValue = 10;
+        let multiplierIndex = 0;
+        let currentMultipliers = [];
+        let starsShown = 0;
 
-        // Функции калькулятора
-        function appendChar(char) {
-            display.value += char;
+        const betValueElement = document.getElementById("betValue");
+        const winValueElement = document.getElementById("winValue");
+
+        const rows = 5;
+        const cols = 5;
+        let mines = [];
+        let stars = [];
+        let isAnimating = false;
+
+        // Function to generate random multipliers
+        function generateRandomMultipliers(count, min, max) {
+            const multipliers = [];
+            for (let i = 0; i < count; i++) {
+                let multiplier = (Math.random() * (max - min) + min).toFixed(3); // Generate number with 3 decimal precision
+                multipliers.push(parseFloat(multiplier));
+            }
+            return multipliers;
         }
 
-        function clearDisplay() {
-            display.value = "";
-        }
-
-        function calculate() {
-            try {
-                display.value = eval(display.value);
-            } catch (e) {
-                display.value = "Ошибка";
+        function updateMultipliers() {
+            if (trapsAmount === 1) {
+                currentMultipliers = generateRandomMultipliers(3, 1.05, 1.15); // For 1 trap
+            } else if (trapsAmount === 3) {
+                currentMultipliers = generateRandomMultipliers(3, 1.15, 1.30); // For 3 traps
+            } else if (trapsAmount === 5) {
+                currentMultipliers = generateRandomMultipliers(3, 1.30, 1.40); // For 5 traps
+            } else if (trapsAmount === 7) {
+                currentMultipliers = generateRandomMultipliers(3, 1.40, 1.50); // For 7 traps
             }
         }
+
+        function generateBoard() {
+            board.innerHTML = "";
+            mines = [];
+            stars = [];
+
+            for (let i = 0; i < rows * cols; i++) {
+                const cell = document.createElement("div");
+                cell.classList.add("cell", "hidden");
+                cell.dataset.index = i;
+                board.appendChild(cell);
+            }
+        }
+
+        function generateMinesAndStars() {
+            const totalCells = rows * cols;
+            const indexes = Array.from({ length: totalCells }, (_, i) => i);
+
+            // Place traps (mines)
+            for (let i = 0; i < trapsAmount; i++) {
+                const randomIndex = Math.floor(Math.random() * indexes.length);
+                mines.push(indexes.splice(randomIndex, 1)[0]);
+            }
+
+            // Place stars in the remaining cells
+            while (indexes.length > 0) {
+                stars.push(indexes.pop());
+            }
+        }
+
+        function updateBetValue() {
+            betValueElement.textContent = betValue.toFixed(2);
+            betValueElement.classList.add("changed");
+            setTimeout(() => {
+                betValueElement.classList.remove("changed");
+            }, 300);
+        }
+
+        function increaseWin() {
+            if (multiplierIndex < currentMultipliers.length) {
+                let currentMultiplier = currentMultipliers[multiplierIndex];
+                winValue *= currentMultiplier;
+                winValueElement.textContent = winValue.toFixed(2);
+                winValueElement.classList.add("changed");
+                setTimeout(() => {
+                    winValueElement.classList.remove("changed");
+                }, 300);
+                multiplierIndex = (multiplierIndex + 1) % currentMultipliers.length;
+            }
+        }
+
+        function showSignal() {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            const cells = document.querySelectorAll(".cell.hidden");
+            if (cells.length === 0) return;
+
+            const randomCell = cells[Math.floor(Math.random() * cells.length)];
+            const index = parseInt(randomCell.dataset.index);
+
+            randomCell.style.transform = "scale(0)";
+            randomCell.style.opacity = "0";
+
+            setTimeout(() => {
+                randomCell.classList.remove("hidden");
+
+
+                randomCell.classList.add("show-icon");
+
+                const icon = document.createElement("div");
+                icon.classList.add("icon");
+
+                if (mines.includes(index)) {
+                    randomCell.classList.add("mine");
+                    icon.textContent = "✖";
+                } else {
+                    randomCell.classList.add("star");
+                    icon.textContent = "★";
+                    increaseWin(); // Increase win value with multiplier
+                }
+
+                randomCell.appendChild(icon);
+
+                randomCell.style.transform = "scale(1)";
+                randomCell.style.opacity = "1";
+
+                setTimeout(() => {
+                    isAnimating = false;
+                }, 500);
+            }, 400);
+        }
+
+        function updateTrapCount(change) {
+            // Update trap count in steps of 2, but do not go below 1 or above 7
+            if (trapsAmount === 1 && change < 0) return; // Don't decrease below 1
+            if (trapsAmount === 7 && change > 0) return; // Don't increase above 7
+            trapsAmount += change;
+            trapsAmountElement.textContent = trapsAmount;
+            generateBoard();
+            generateMinesAndStars();
+            updateMultipliers();
+        }
+
+        // Function to reset the game (win value, multipliers, cells, etc.)
+        function resetGame() {
+            winValue = betValue; // Reset win value to bet value
+            winValueElement.textContent = winValue.toFixed(2);
+            multiplierIndex = 0; // Reset multiplier index
+            generateBoard();
+            generateMinesAndStars();
+            updateMultipliers(); // Update multipliers
+        }
+
+        showSignalBtn.addEventListener("click", showSignal);
+
+        prevPresetBtn.addEventListener("click", () => {
+            updateTrapCount(-2); // Step of 2
+            resetGame(); // Reset game when changing difficulty
+        });
+
+        nextPresetBtn.addEventListener("click", () => {
+            updateTrapCount(2); // Step of 2
+            resetGame(); // Reset game when changing difficulty
+        });
+
+        // Add button for clearing the board
+        const clearFieldBtn = document.getElementById("clearFieldBtn");
+        clearFieldBtn.addEventListener("click", resetGame); // Reset game when clearing the field
+
+        generateBoard();
+        generateMinesAndStars();
+        updateMultipliers();
+        updateBetValue();
+
     </script>
 </body>
 
